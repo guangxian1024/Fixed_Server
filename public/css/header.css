@@ -1,0 +1,17 @@
+element.style {
+}
+.navbar-nav > li > .dropdown-menu {
+margin-top: 0;
+border-top-left-radius: 0;
+border-top-right-radius: 0;
+}
+.dropdown-menu {
+position: absolute !important;
+background: rgba(0, 194, 255, 0.5) !important;
+padding: 0;
+border: 0;
+right: 0;
+left: auto;
+min-width: 100%;
+color:red;
+}

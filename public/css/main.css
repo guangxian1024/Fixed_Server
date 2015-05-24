@@ -1,0 +1,36 @@
+@import 'prettyPhoto.css';
+/* ==========================================================================
+   Author's custom styles
+   ========================================================================== */
+
+.centered {
+	margin: auto auto;
+	display: block;
+	width: 185px;
+	margin-bottom: 25px;
+}
+.thumbnail {
+	-webkit-border-radius: 0px;
+	-moz-border-radius: 0px;
+	border-radius: 0px;
+	border: 1px solid #444;
+}
+.thumbnail img {
+	opacity: .75;
+}
+.thumbnail img:hover {
+	opacity: 1;
+}
+.gallery {
+}
+.gallery h3 {
+	font-family: 'Oxygen', 'Open Sans Condensed', sans-serif;
+	line-height: 20px;
+	margin-bottom:20px;
+}
+.thumbnails > li {
+	background: #fff;
+}
+ .thumbnails > li.span3:nth-child(4n+5) {
+ margin-left: 0 !important;
+}

@@ -1,0 +1,28 @@
+.apba-sub {display:block; width:90%; height:50px; text-align:center; border-bottom:solid 1px #b00; margin-right:auto; margin-left:auto; margin-bottom:20px;} 
+.image-cert { display:block; width:100%; height:220px;}
+.image-cert img { display:block; margin-left:auto; margin-right:auto;}
+.apba-sub span { display:block; width:570px; height:40px; margin-left:auto; margin-right:auto; background-image:url(../img/apba-sub.png); background-repeat:no-repeat; margin-top:5px;}
+.structure .span3 { text-align:center; }
+.structure .span3 h5 { color:#b00}
+.arrow { display:block; width:1px; height:40px; margin-left:auto; margin-right:auto; padding:0; background-color:#b00}
+
+p.level1 { background-color:#b00; padding:35px 5px 5px 5px; height:70px; color:#fff; font-weight:bold; -webkit-border-radius:5px; -moz-border-radius:5px; -border-radius:5px;}
+p.medal { background-image:url(../img/apba-150x150.png); background-repeat:no-repeat; width:150px; height:150px;  margin-left:25px}
+
+
+/*
+.apba-sub span { display:block; width:570px; height:40px; margin-left:auto; margin-right:auto; background-image:url(../img/apba-sub.png); background-repeat:no-repeat; margin-top:5px;}
+.structure { display:block; width:210px; float:left; margin-right:17px;  }
+.structure li.lvl1 { display:block;  color:#b00; font-weight:bold; font-size:14px; padding:10px; text-align: right; }
+.structure li.lvl1last { display:block;  color:#b00; font-weight:bold; font-size:14px; padding:10px; text-align: center; margin-left:18px; }
+.structure li:last-child { text-align:center; }
+.structure li.lvl2 { display:block;  color:#fff; width:150px; font-weight:bold; font-size:12px; padding:10px; text-align: center; background-color:#b00; margin-left:25px; margin-top:10px; float:right; -webkit-border-radius:5px; -moz-border-radius:5px; border-radius:5px; margin-bottom:10px;}
+.structure li.lvl3 { display:block;   color:#b00; width:150px; height:40px;  font-weight:bold; font-size:12px;  padding:10px;  margin-left:25px; margin-top:10px; float:right; -webkit-border-radius:5px; -moz-border-radius:5px; border-radius:5px; text-align:center;}
+.structure li.lvl4 { display:block;  color:#b00; width:150px; font-weight:bold; font-size:12px; padding:10px; text-align: center; margin-left:10px; margin-top:10px; float:right; -webkit-border-radius:5px; -moz-border-radius:5px; border-radius:5px;}
+span.medalion{ display:block; width:150px; height:150px; background-image:url(../images/apba-150x150.png); background-repeat:no-repeat;}
+
+.arrow { display:block; width:40px; height:20px; margin-left:auto; margin-right:auto; padding:0;}
+.arrow span { display:block; width:15px; height:20px; border-right:solid 1px #b00; float:right; padding:0;}
+
+.image-cert { display:block; width:100%; height:220px;}
+.image-cert img { display:block; margin-left:auto; margin-right:auto;}
