@@ -19,7 +19,7 @@ class Api_model extends CI_Model{
 	// Add Store
 	public function addUser($data)
 	{
-		$this->db->insert('user',$data);
+		$this->db->insert('users',$data);
 		return $this->db->insert_id();
 	}
 	
@@ -27,211 +27,317 @@ class Api_model extends CI_Model{
 	public function updateUserData($fb_id, $data)
 	{
 		$this->db->where('fb_id', $fb_id);
-		$result = $this->db->update('user', $data);
+		$result = $this->db->update('users', $data);
 		
 		return $result;
 	}
 	
-	//  Get User Data using FB id.
+	//  Get User Data using FB ID.
 	public function getUserData($fb_id)
 	{
-		$query = $this->db->query("SELECT * FROM user WHERE fb_id=?",array($fb_id));
-		return $query->result();
+		$query = $this->db->query("SELECT * FROM users WHERE fb_id=?",array($fb_id));
+		return $query->result_array();
 	}
 	
-		
+        public function getFriendList($friend_id_list){
+            
+            $nameArray = $this->getNameArray();
+            
+            $returnValue = array();
+            if(is_array($friend_id_list)){
+               
+                foreach($friend_id_list as $friend_fb_id){
+                    
+                    $temp = array();
+                    $temp["id"] = $friend_fb_id;
+                    $temp["name"] = $nameArray[$friend_fb_id];
+                   
+                     $returnValue[] = $temp;
+                }
+                              
+            }
+            
+            return $returnValue;
+        }
+        
+        public function  decreaseActiveFixes($fb_id){
+            $query = $this->db->query("UPDATE users SET fixes=fixes-1 WHERE fb_id=?",array($fb_id));
 	
-	/*   Store  DATA PROCESS                 */
-	
-	// Get All Store Data
-	public function getStoreList()
-	{
+        }
 
-            $query = $this->db->query("SELECT id,name,contact_name,special_title,fb_id ,image_path,special_description, street, 
-											city ,latitude, longitude, special_price, tax_rate, phonenumber, paypalemail, 
-											publish_flag, pagelink, expire_time,offer_token_limit, TIMESTAMPDIFF(SECOND, published_time, NOW()) as different_time
-									FROM store 
-									WHERE publish_flag=1 AND DATEDIFF(CURDATE() ,DATE(published_time) ) >= 0 AND DATEDIFF( CURDATE(),DATE(published_time)) <=expire_day 
-                                                                               AND TIME_TO_SEC(TIMEDIFF(CURTIME(),TIME(published_time))) > 0 AND TIME_TO_SEC(TIMEDIFF(CURTIME(), TIME(published_time))) < expire_time * 60 AND ((special_price = 0 AND offer_token_limit != 0) || special_price != 0)  order by name");
-		/*$query = $this->db->query("SELECT id,name,contact_name,special_title,fb_id ,image_path,special_description, street, 
-											city ,latitude, longitude, special_price, tax_rate, phonenumber, paypalemail, 
-											publish_flag, pagelink, expire_time, TIMESTAMPDIFF(SECOND, published_time, NOW()) as different_time
-									FROM store 
-									WHERE publish_flag=1 AND TIMESTAMPDIFF(SECOND, published_time, NOW()) > 0 AND TIMESTAMPDIFF(SECOND, published_time, NOW()) < expire_time * 60 order by name");
-		/*
-		$query = $this->db->query("SELECT id,name,contact_name,special_title,fb_id ,image_path,special_description, street, 
-											city ,latitude, longitude, special_price, tax_rate, phonenumber, paypalemail, 
-											publish_flag, pagelink, expire_time, TIMESTAMPDIFF(SECOND, published_time, NOW()) as end_time
-									FROM store 
-									WHERE publish_flag=1 AND TIMESTAMPDIFF(SECOND, published_time, NOW()) > 0 AND TIMESTAMPDIFF(SECOND, published_time, NOW()) < expire_time * 60 order by name");
-		*/
-		return $query->result();
-				 
-	}
-	
-	// Add Store
-	public function addStore($data)
-	{
-		$this->db->insert('store',$data);
-		return $this->db->insert_id();
-	}
-	              
-	//  update Store Data
-	public function updateStoreData($fb_id, $data)
-	{
-		$this->db->where('fb_id', $fb_id);
-		$result = $this->db->update('store', $data);
-		
-		return $result;
-	}
-			
-	
-	// Delete Store Data
-	public function deleteStoreData($fb_id)
-	{
-		$this->db->where('fb_id', $fb_id);
-		$this->db->delete('store');
-		
-	}
-	
-	//  Get Store Data using FB id.
-	public function getStoreData($fb_id)
-	{
-		$query = $this->db->query("SELECT * FROM store WHERE fb_id=?",array($fb_id));
-		return $query->result();
-	}
-	
-        public function unpublishStore($fb_id)
+        public function resetFixes(){
+            $query = $this->db->query("UPDATE users SET fixes=5");
+        }
+        
+        public function addCoin($fb_id, $amount)
         {
-            $query = $this->db->query("UPDATE store SET token_limit = token_limit + offer_token_limit, publish_flag = 0 , offer_token_limit = 0  where fb_id = ? ", array(($fb_id)));
+            $query = $this->db->query("UPDATE users SET coins=coins  + ? WHERE fb_id=?",array($amount,$fb_id));
+        }
+        
+        
+        public function withdrawCoin($fb_id, $amount)
+        {
+            $query = $this->db->query("UPDATE users SET coins=coins - ? WHERE fb_id=?",array($amount,$fb_id));
+        }
+        
+        
+        //  Get Friend Profile  Data using FB ID.
+	public function getProfileData($fb_id)
+	{
+		$query = $this->db->query("SELECT fb_id, name, birthday, state, city, street, tagline, workplace, schools, religion, interest, photo_path FROM users WHERE fb_id=?",array($fb_id));
+		return $query->result();
+	}
+        
+        
+        public function addMatch($data)
+        {
+		$this->db->insert('matches',$data);
+		return $this->db->insert_id();
+           
+        }
+              
+        // My Matches 
+        
+        public function getMyMatches($fb_id){
+            
+            $returnValue = array();
+            
+            $now = date("Y-m-d H:i:s");
+            $query = $this->db->query("SELECT *, (7 - DATEDIFF(DATE(?),DATE(fix_date))) as expire_day"
+                    . " FROM matches WHERE (user1=? OR user2=?) AND is_dislike=0 AND is_accept=0 AND DATEDIFF(DATE(?),DATE(fix_date)) <=7 ",array($now,$fb_id,$fb_id,$now));
+            $suggestedMatches =  $query->result_array();
+            
+            $nameArray = $this->getNameArray();
+            
+            $tempArray = array();
+            if(is_array($suggestedMatches)){
+               
+                
+                foreach($suggestedMatches as $row){
+                    $row["name1"] = $nameArray[$row["user1"]];
+                    $row["name2"] = $nameArray[$row["user2"]];
+                    $row["provider_name"] = $nameArray[$row["provider"]];
+                    $tempArray[] = $row;
+                }
+                
+                $returnValue["suggested_matches"] = $tempArray;
+            }
+            
+            $query = $this->db->query("SELECT *"
+                    . " FROM matches WHERE (user1=? OR user2=?) AND is_accept=1",array($fb_id,$fb_id));
+            $acceptedMatches =  $query->result_array();
+            
+            $tempArray = array();
+            if(is_array($acceptedMatches)){
+                              
+                foreach($acceptedMatches as $row){
+                    $row["name1"] = $nameArray[$row["user1"]];
+                    $row["name2"] = $nameArray[$row["user2"]];
+                    $row["provider_name"] = $nameArray[$row["provider"]];
+                    $tempArray[] = $row;
+                }
+                
+                $returnValue["accepted_matches"] = $tempArray;
+            }
+            
+            return $returnValue;
             
         }
-	
         
-        public function decreaseSpecialOfferLimit($fb_id)
-        {
-            $query = $this->db->query("UPDATE store SET offer_token_limit = offer_token_limit-1  where fb_id = ? ", array(($fb_id)));
+        public function likeFriend($id, $fb_id){
+            
+            $query = $this->db->query("UPDATE matches  "
+                    . " SET liked_user = ? where id = ? ", array($fb_id,$id));
+            
+            $query = $this->db->query("UPDATE users  "
+                    . " SET coins = coins - 1 where fb_id = ? ", array($fb_id));
            
         }
         
+        public function acceptMatch($id){
+            
+            $query = $this->db->query("UPDATE matches  "
+                    . " SET is_accept = 1 where id = ? ", array($id));
+           
+        }
         
-	  /*            Order Operation     **/
-	  
-	// Get All Store Data
-	public function getOrderList($merchant_fb_id, $startDateStr, $endDateStr)
-	{
-		$query = $this->db->query("SELECT * FROM order_list WHERE merchant_fb_id=? AND DATE(order_date)>= ? AND DATE(order_date) <= ? order by order_date",array($merchant_fb_id,$startDateStr, $endDateStr));
-				
-		return $query->result();
-				 
-	}
-	
-	public function getUserOrderList($user_fb_id)
-	{
-		$query = $this->db->query("SELECT * FROM (SELECT * FROM order_list WHERE user_fb_id=? order by order_date ) AS t1 INNER JOIN (SELECT fb_id , name AS store_name, street, city FROM store ) AS t2  ON t1.merchant_fb_id = t2.fb_id ",array($user_fb_id));
-			
-		return $query->result();
-	}
-	
-	public function getOrderNumber()
-	{
-		$query = $this->db->query("SELECT last_order_number FROM order_number ");
-		$result = $query->result();
-		
-		$orderNumber = $result[0]->last_order_number;
-		
-		$query = $this->db->query("UPDATE order_number set last_order_number = ? ",array(intval($orderNumber) + 1));
-		
-		return $orderNumber;
-	}
-	
-	public function addOrder($data)
-	{
-		$this->db->insert('order_list', $data);
-		
-		return $this->db->insert_id();
-	}
-	
-	public function updateOrder($fb_id,$data)
-	{
-		$this->db->where('merchant_fb_id', $fb_id);
-		$this->db->update('order_list', $data);
-	}
-		
-	public function completeOrder($orderNumber)
-	{
-		$this->db->query("UPDATE order_list SET completed_flag=1 WHERE orderNumber = ?", array($orderNumber));
-	
-	}
-	
-	public function completeOrderUsingBarcode($fb_id, $barcode)
-	{
-		$this->db->query("UPDATE order_list SET completed_flag=1 WHERE merchant_fb_id = ? AND barcode = ?", array($fb_id, $barcode));
-		$query = $this->db->query("SELECT *  FROM order_list WHERE merchant_fb_id = ? AND barcode = ?", array($fb_id, $barcode));
-		$result = $query->result();
-		
-		return $result;
-	}
-	
-	public function unCompleteOrder($orderNumber)
-	{
-		$this->db->query("UPDATE order_list SET completed_flag=0 WHERE orderNumber = ?", array($orderNumber));
-	
-	}
-	
+        public function dislikeMatch($id){
+            
+            $query = $this->db->query("UPDATE matches  "
+                    . " SET is_dislike = 1 where id = ? ", array($id));
+            $query = $this->db->query("UPDATE users  "
+                    . " SET coins = coins + 1 where fb_id = ? ", array($fb_id));
+           
+        }
+        
+        // Get Suggested Friend List 
+        
+        public function getUserFriendList($fb_id)
+        {
+            $query = $this->db->query("SELECT fb_friend_list FROM users WHERE fb_id=?",array($fb_id));
+            return $query->result();
+        }
+        
+	public function getPersonForMatch($fb_id){
+            $now = date("Y-m-d H:i:s");
+            
+            $sql = sprintf("SELECT fb_id,name, interest, sex, is_man, single, (YEAR('%s') - YEAR(STR_TO_DATE(birthday,'%%m/%%d/%%Y'))) as age, min_age, max_age, latitude, longitude"
+                    . ",distance_range, height,min_height, max_height, religion, religion_priority, t1.match_tags, 0 as match_score"
+                    . " FROM users ,(SELECT count(*) as match_tags FROM matches WHERE user1=%s OR user2=%s) as t1 "
+                    . "WHERE fb_id=%s",$now,$fb_id,$fb_id, $fb_id);
+            $query = $this->db->query($sql);
+                       
+            $result =  $query->result(); 
+            if(is_array($result) && count($result)!= 0 ){
+                return $result[0];
+            }
+                
+            return NULL;
+                    
+        }
+        
+        public function getSuggestedMatchByMe($fb_id){
+            
+            $now = date("Y-m-d H:i:s");
+            
+            $query = $this->db->query("SELECT *, (7 - DATEDIFF(DATE(?),DATE(fix_date))) as expire_day"
+                    . " FROM matches WHERE provider=? AND is_dislike=0 AND is_accept=0 AND DATEDIFF(DATE(?),DATE(fix_date)) <=7 ",array($now,$fb_id,$now));
+            $result =  $query->result_array();
+            
+            $returnValue = array();
+            if(is_array($result)){
+                $nameArray = $this->getNameArray();
+                
+                foreach($result as $row){
+                    $row["name1"] = $nameArray[$row["user1"]];
+                    $row["name2"] = $nameArray[$row["user2"]];
+                    $row["provider_name"] = $nameArray[$row["provider"]];
+                    $returnValue[] = $row;
+                }
+            }
+            return $returnValue;
+        }
+        
+        public function getSuggestedMatchCountByMe($fb_id){
+            $query = $this->db->query("SELECT count(*) as count"
+                    . " FROM matches WHERE provider=?",array($fb_id));
+            $result =  $query->result_array();
+                        
+            if(is_array($result)){
+                 return $result[0]["count"];                            
+            }
+            return 0;
+        }
+        
+        public function getFixedMatchByMe($fb_id){
+            $query = $this->db->query("SELECT *"
+                    . " FROM matches WHERE provider=? AND is_accept=1",array($fb_id));
+            $result =  $query->result_array();
+                        
+            if(is_array($result)){
+                $nameArray = $this->getNameArray();
+                
+                foreach($result as $row){
+                    $row["name1"] = $nameArray[$row["user1"]];
+                    $row["name2"] = $nameArray[$row["user2"]];
+                    $row["provider_name"] = $nameArray[$row["provider_name"]];
+                }
+            }
+            return $result;
+        }
+        
+        public function getFixedMatchCountByMe($fb_id){
+            $query = $this->db->query("SELECT count(*) as count"
+                    . " FROM matches WHERE provider=? AND is_accept=1",array($fb_id));
+            $result =  $query->result_array();
+                        
+            if(is_array($result)){
+                 return $result[0]["count"];                            
+            }
+            return 0;
+        }
+        
+        public function getPendingMatchCountByMe($fb_id){
+            
+            $now = date("Y-m-d H:i:s");
+            $query = $this->db->query("SELECT count(*) as count"
+                    . " FROM matches WHERE provider=? AND is_dislike=0 AND is_accept=0 AND DATEDIFF(DATE(?),DATE(fix_date)) <=7",array($fb_id,$now));
+            $result =  $query->result_array();
+                        
+            if(is_array($result)){
+                 return $result[0]["count"];                            
+            }
+            return 0;
+        }
+        
+        public function getNameArray(){
+            $query = $this->db->query("SELECT fb_id, name FROM users ");
+            $result = $query->result_array();
+            
+            $returnArray = array();
+            if(is_array($result)){
+                
+                foreach($result as $row){
+                    $returnArray[$row["fb_id"]] = $row["name"];
+                }
+            
+            }
+            
+            return $returnArray;
+        }
+        
+        
+        public function getBankInfo($fb_id){
+            $query = $this->db->query("SELECT match_revenue, referral_revenue"
+                    . " FROM users WHERE fb_id=?",array($fb_id));
+            $result =  $query->result_array();
+                        
+            
+            return $result;
+        }
+        
 	////////////////////   Register Device(user and merchant ) , Getting Merchant Device List   //////////////////////
 	
-	public function  registerDevice($fb_id, $devicetoken, $user_flag)
+	public function  registerDevice($fb_id, $devicetoken)
 	{
-		$query = $this->db->query("SELECT * FROM device_list WHERE fb_id=? AND devicetoken=? AND user_flag=?", array($fb_id, $devicetoken, $user_flag));
+		$query = $this->db->query("SELECT * FROM device WHERE fb_id=? AND token=?", array($fb_id, $devicetoken));
 		
 		$result =  $query->result();
 	
 		if(is_array($result) == false || count($result) == 0)  /// if is not exist
 		{
-			$data = array("fb_id"=>$fb_id, "devicetoken"=>$devicetoken, "user_flag"=>$user_flag);
+			$data = array("fb_id"=>$fb_id, "token"=>$devicetoken, "flag"=>1);
 			
-			$this->db->insert("device_list", $data);
-		}
+			$this->db->insert("device", $data);
+		}else{
+                    $this->db->query("UPDATE device SET flag = 1 WHERE fb_id=? AND token=?", array($fb_id, $devicetoken));
+                }
 	}
 	
-	
-	public function getDeviceList($fb_id, $user_flag)
+        public function  gotoOfflineDevice($fb_id, $devicetoken)
 	{
-		if($user_flag == 0)
-			$query = $this->db->query("SELECT devicetoken FROM device_list WHERE fb_id=? AND user_flag=?", array($fb_id,$user_flag));
-		else
-			$query = $this->db->query("SELECT devicetoken ,fb_id FROM ( SELECT t1.fb_id, latitude, longitude, devicetoken FROM  (SELECT fb_id, latitude, longitude FROM user WHERE push_flag = 1 ) as t1 INNER JOIN (SELECT fb_id , devicetoken FROM device_list WHERE user_flag=1) AS t2  ON t1.fb_id = t2.fb_id ) AS t3, 
+		$this->db->query("UPDATE device SET flag = 0 WHERE fb_id=? AND token=?", array($fb_id, $devicetoken));
+			
+	}
+        
+	
+	public function getDeviceList($fb_id)
+	{
+		
+		$query = $this->db->query("SELECT token FROM device WHERE fb_id=? AND flag=1", array($fb_id));
+		
+                /*
+		$query = $this->db->query("SELECT devicetoken ,fb_id FROM ( SELECT t1.fb_id, latitude, longitude, devicetoken FROM  (SELECT fb_id, latitude, longitude FROM user WHERE push_flag = 1 ) as t1 INNER JOIN (SELECT fb_id , devicetoken FROM device_list WHERE user_flag=1) AS t2  ON t1.fb_id = t2.fb_id ) AS t3, 
 													(SELECT fb_id AS merchant_fb_id, latitude, longitude FROM  store WHERE store.fb_id = ?) AS t4
 											WHERE 111.1111 * DEGREES(ACOS(COS(RADIANS(t3.latitude))
 																 * COS(RADIANS(t4.latitude))
 																 * COS(RADIANS(t3.longitude - t4.longitude))
 																 + SIN(RADIANS(t3.latitude))
 																 * SIN(RADIANS(t4.latitude)))) < 1", array($fb_id));
-		return $query->result();
+		*/
+                return $query->result();
 	}
-	
-	public function  registerAndroidDevice($fb_id, $devicetoken, $user_flag)
-	{
-		$query = $this->db->query("SELECT * FROM android_device_list WHERE fb_id=? AND devicetoken=? AND user_flag=?", array($fb_id, $devicetoken, $user_flag));
 		
-		$result =  $query->result();
-	
-		if(is_array($result) == false || count($result) == 0)  /// if is not exist
-		{
-			$data = array("fb_id"=>$fb_id, "devicetoken"=>$devicetoken, "user_flag"=>$user_flag);
-			
-			$this->db->insert("android_device_list", $data);
-		}
-		
-	}
-	
-	public function getAndroidDeviceList($fb_id, $user_flag)
-	{
-		$query = $this->db->query("SELECT devicetoken FROM android_device_list WHERE fb_id=? AND user_flag=?", array($fb_id, $user_flag));
-		return $query->result();
-	}
-	
 				
 /*	
 	SELECT a.city AS from_city, b.city AS to_city, 
@@ -254,7 +360,7 @@ class Api_model extends CI_Model{
 		
 		return $result[0]->now;
 	}
-        
+  /*      
         public function getExpireTimeDiff($fb_id)
 	{
 		$query = $this->db->query("SELECT  TIME_TO_SEC(TIMEDIFF(TIME(published_time), CURTIME())) as diff FROM store WHERE fb_id = ".$fb_id);
@@ -270,7 +376,14 @@ class Api_model extends CI_Model{
 		
 		return $result[0]->diff;
 	}
-        
+    */    
+     
+//        public function addTesters()
+//        {
+//            for($i = 123456750 ;$i < 123456773; $i++)
+//             $query = $this->db->query("INSERT INTO `fixed_db`.`users` (`fb_id`, `name`, `email`, `sex`, `birthday`, `single`, `workplace`, `schools`, `interest`, `state`, `city`, `street`, `zipcode`, `latitude`, `longitude`, `is_man`, `is_interested_man`, `is_single`, `religion_priority`, `match_zipcode`, `diance_range`, `min_age`, `max_age`, `min_height`, `max_height`, `tagline`, `height`, `religion`, `photo_path`, `fix_reminder`, `cash_notification`, `match_notification`, `chat_notification`, `alert_setting`, `update_setting`, `fb_friend_list`, `coins`, `match_revenue`, `referral_revenue`, `fixes`)"
+//                     . " VALUES ('?', 'Bryan', 'bryan?@gmail.com', '0', '1990-5-5', '1', 'JpMorgan Chase Bank', 'California University, University of Marland', 'Dog Lover , Momma''s Boy', 'NY', 'New York', 'Potomac, MD', '1234', '12.56', '45.23', '0', '0', '1', '0', '1234', '100', '18', '30', '45', '65', 'Just moved to new york, busy being myself', '62', '2', '[\"?.jpg\"]', '1', '1', '1', '1', '1', '1', '[\"123456752\",\"123456753\"]', '0', '0', '0', '5')", array($i,$i,$i));
+//        }
         
 }
 
